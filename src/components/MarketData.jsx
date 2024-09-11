@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
+const email = process.env.REACT_APP_EMAIL;
+const password = process.env.REACT_APP_PASSWORD;
+const API_KEY = process.env.REACT_APP_API_KEY;
+
 const MarketData = () => {
-  const [prices, setPrices] = useState(null);
+  const [currentMarketPrices, setCurrentMarketPrices] = useState(null);
   const [error, setError] = useState(null);
-  const [sessionData, setSessionData] = useState(null);
   const [tokens, setTokens] = useState(null);
 
-  const email = process.env.REACT_APP_EMAIL;
-  const password = process.env.REACT_APP_PASSWORD;
-  const API_KEY = process.env.REACT_APP_API_KEY;
-  const epic = "EURUSD"; // e.g., 'CS.D.EURUSD.MINI.IP'
+  const ws = useRef(null);
 
   const startSession = async () => {
     try {
@@ -31,60 +31,95 @@ const MarketData = () => {
         cstToken: response.headers["cst"],
         securityToken: response.headers["x-security-token"],
       });
-      setSessionData(response.data);
     } catch (err) {
       setError("Error starting session");
     }
   };
 
-  const fetchMarketData = async () => {
-    try {
-      const response = await axios.get(`/markets?epics=EURUSD`, {
-        headers: {
-          Authorization: `Bearer ${tokens.sessionToken}`,
-          CST: tokens.cstToken, // Session token from authentication
-          "X-SECURITY-TOKEN": tokens.securityToken, // Session token from authentication
-        },
-      });
-      //   console.log(response);
-      setPrices(response.data.marketDetails[0].snapshot); // Store the price data
-    } catch (err) {
-      setError("Error fetching market data");
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
-    startSession();
+    (async () => {
+      await startSession();
+    })();
   }, []);
 
   useEffect(() => {
-    const getData = async () => {
-      if (tokens) fetchMarketData();
+    if (!tokens) return;
+    const connectWebSocket = async () => {
+      try {
+        ws.current = new WebSocket(
+          "wss://api-streaming-capital.backend-capital.com/connect"
+        );
+        ws.current.onopen = () => {
+          console.log("WebSocket Connection Opened");
+          const subscribeMessage = JSON.stringify({
+            destination: "marketData.subscribe",
+            correlationId: "1",
+            cst: tokens.cstToken,
+            securityToken: tokens.securityToken,
+            payload: {
+              epics: ["EURUSD"],
+            },
+          });
+          ws.current.send(subscribeMessage);
+        };
+
+        ws.current.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          //   console.log("Received data:", data);
+          setCurrentMarketPrices(data.payload);
+        };
+
+        ws.current.onerror = (err) => {
+          console.error("WebSocket error:", err);
+          setError("WebSocket error");
+        };
+
+        ws.current.onclose = () => {
+          console.log("WebSocket Connection Closed");
+        };
+      } catch (err) {
+        console.error("Error during WebSocket connection:", err);
+        setError("WebSocket connection error");
+      }
     };
+    connectWebSocket();
+    const pingInterval = setInterval(() => {
+      if (ws.current.readyState === WebSocket.OPEN) {
+        console.log("Sending ping to server");
+        ws.current.send(
+          JSON.stringify({
+            destination: "ping",
+            correlationId: "5",
+            cst: tokens.cstToken,
+            securityToken: tokens.securityToken,
+          })
+        );
+      }
+    }, 600000); // 10 minutes in milliseconds
 
-    getData();
-    const interval = setInterval(() => {
-      getData();
-    }, 500);
-
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(pingInterval);
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
   }, [tokens]);
 
   return (
     <div>
       <h2>Live Market Data</h2>
       {error && <p>{error}</p>}
-      {prices ? (
+      {currentMarketPrices ? (
         <div>
           <p>
-            <strong>Bid Price:</strong> {prices.bid}
+            <strong>Bid Price:</strong> {currentMarketPrices.bid}
           </p>
           <p>
-            <strong>offer Price:</strong> {prices.offer}
+            <strong>offer Price:</strong> {currentMarketPrices.ofr}
           </p>
           <p>
-            <strong>Updated time:</strong> {prices.updateTime}
+            <strong>Updated time:</strong>
+            {new Date(currentMarketPrices.timestamp).toLocaleTimeString()}
           </p>
         </div>
       ) : (

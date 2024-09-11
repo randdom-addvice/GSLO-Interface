@@ -1,171 +1,154 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import MarketData from "./MarketData";
-const API_KEY = "VR5AyLUFoQv01dtj";
-const symbol = "AAPL";
+import PriceFeed from "./PriceFeed";
+import OpenedOrders from "./OpenedOrders";
+import TradeInput from "./TradeInput";
+import axios from "axios";
+import Navbar from "./Navbar";
+
+const email = process.env.REACT_APP_EMAIL;
+const password = process.env.REACT_APP_PASSWORD;
+const API_KEY = process.env.REACT_APP_API_KEY;
 
 const Interface = () => {
+  const [currentMarketPrices, setCurrentMarketPrices] = useState(null);
+  const [error, setError] = useState(null);
+  const [tokens, setTokens] = useState(null);
+  const [accounts, setAccounts] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+
+  const ws = useRef(null);
+
+  const startSession = async () => {
+    try {
+      const response = await axios.post(
+        "/session",
+        {
+          identifier: email,
+          password: password,
+        },
+        {
+          headers: {
+            "X-CAP-API-KEY": API_KEY,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setTokens({
+        cstToken: response.headers["cst"],
+        securityToken: response.headers["x-security-token"],
+      });
+    } catch (err) {
+      setError("Error starting session");
+    }
+  };
+
+  async function getAllAccounts() {
+    try {
+      const response = await axios.get("/accounts", {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CAP-API-KEY": API_KEY,
+          cst: tokens.cstToken,
+          "X-SECURITY-TOKEN": tokens.securityToken,
+        },
+      });
+      setAccounts(response.data.accounts);
+      setSelectedAccount(response.data.accounts[0]);
+      console.log(response);
+    } catch (err) {
+      setError("Error starting session");
+    }
+  }
+
+  useEffect(() => {
+    startSession();
+    const startSessionInterval = setInterval(async () => {
+      await startSession();
+    }, 600000);
+
+    return () => {
+      clearInterval(startSessionInterval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!tokens) return;
+    getAllAccounts();
+
+    const connectWebSocket = async () => {
+      try {
+        ws.current = new WebSocket(
+          "wss://api-streaming-capital.backend-capital.com/connect"
+        );
+        ws.current.onopen = () => {
+          console.log("WebSocket Connection Opened");
+          const subscribeMessage = JSON.stringify({
+            destination: "marketData.subscribe",
+            correlationId: "1",
+            cst: tokens.cstToken,
+            securityToken: tokens.securityToken,
+            payload: {
+              epics: ["EURUSD"],
+            },
+          });
+          ws.current.send(subscribeMessage);
+        };
+
+        ws.current.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          // console.log("Received data:", data);
+          setCurrentMarketPrices(data.payload);
+        };
+
+        ws.current.onerror = (err) => {
+          console.error("WebSocket error:", err);
+          setError("WebSocket error");
+        };
+
+        ws.current.onclose = () => {
+          console.log("WebSocket Connection Closed");
+        };
+      } catch (err) {
+        console.error("Error during WebSocket connection:", err);
+        setError("WebSocket connection error");
+      }
+    };
+    connectWebSocket();
+    const pingInterval = setInterval(() => {
+      if (ws.current.readyState === WebSocket.OPEN) {
+        console.log("Sending ping to server");
+        ws.current.send(
+          JSON.stringify({
+            destination: "ping",
+            correlationId: "5",
+            cst: tokens.cstToken,
+            securityToken: tokens.securityToken,
+          })
+        );
+      }
+    }, 600000);
+
+    return () => {
+      clearInterval(pingInterval);
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, [tokens]);
+  if (!currentMarketPrices) return <div>No data yet</div>;
   return (
     <>
-      <MarketData />
-      {/* <main>
+      <Navbar accounts={accounts} selectedAccount={selectedAccount} />
+      <main>
         <div className="main">
           <section className="orders">
-            <section className="orders-list">
-              <h3>Opened Orders</h3>
-              <div className="orders-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Symbol</th>
-                      <th>Volume</th>
-                      <th>Side</th>
-                      <th>SL</th>
-                      <th>TP</th>
-                      <th>Commission</th>
-                      <th>Buttons</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>EURUSD</td>
-                      <td>0.5</td>
-                      <td>BUY</td>
-                      <td>0.1050</td>
-                      <td>0.1200</td>
-                      <td>0.75</td>
-                      <td>
-                        <button>close</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>EURUSD</td>
-                      <td>0.5</td>
-                      <td>BUY</td>
-                      <td>0.1050</td>
-                      <td>0.1200</td>
-                      <td>0.75</td>
-                      <td>
-                        <button>close</button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-            <section className="orders-priceFeed">
-              <h3>Live Prices</h3>
-              <div className="orders-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Symbol</th>
-                      <th>Sell</th>
-                      <th>Buy</th>
-                      <th>Spread</th>
-                      <th>GSP</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>EURUSD</td>
-                      <td>1.2000</td>
-                      <td>1.2001</td>
-                      <td>0.1</td>
-                      <td>0.1</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <OpenedOrders />
+            <PriceFeed currentMarketPrices={currentMarketPrices} />
           </section>
-
           <section className="tradeBlock">
             <div className="tradeBlock-group">
-              <div className="tradeBlock-input">
-                <h3>Input</h3>
-                <div className="card">
-                  <ul>
-                    <li>
-                      <div>
-                        <span>Entry</span>
-                        <span>
-                          <input
-                            type="number"
-                            className="sl-input"
-                            placeholder="Entry"
-                          />
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Stop Loss</span>
-                        <span>
-                          <input
-                            type="number"
-                            className="sl-input"
-                            placeholder="stop loss"
-                          />
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Account Equity</span>
-                        <span>
-                          <input
-                            type="number"
-                            className="sl-input"
-                            placeholder="Account Equity"
-                          />
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Risk %</span>
-                        <span>
-                          <input
-                            type="number"
-                            className="sl-input"
-                            placeholder="Risk %"
-                          />
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Risk USD</span>
-                        <span>
-                          <input
-                            type="number"
-                            className="sl-input"
-                            placeholder="Risk USD"
-                          />
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Commission USD</span>
-                        <span>
-                          <input
-                            type="number"
-                            className="sl-input"
-                            placeholder="Commission USD"
-                          />
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Position Size</span>
-                        <span></span>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+              <TradeInput currentMarketPrices={currentMarketPrices} />
               <div className="tradeBlock-output">
                 <h3>Output</h3>
                 <div className="card">
@@ -173,6 +156,11 @@ const Interface = () => {
                     <li>
                       <div>
                         <span>Entry</span>
+                      </div>
+                    </li>
+                    <li>
+                      <div>
+                        <span>Direction</span>
                       </div>
                     </li>
                     <li>
@@ -217,7 +205,7 @@ const Interface = () => {
             </div>
           </section>
         </div>
-      </main> */}
+      </main>
     </>
   );
 };
