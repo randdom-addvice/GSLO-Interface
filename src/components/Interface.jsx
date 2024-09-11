@@ -170,7 +170,10 @@ const Interface = () => {
                 />
               </div>
               <div className="tradeBlock-buttons">
-                <TradeButtons currentMarketPrices={currentMarketPrices} />
+                <TradeButtons
+                  tokens={tokens}
+                  currentMarketPrices={currentMarketPrices}
+                />
               </div>
             </section>
           </div>
