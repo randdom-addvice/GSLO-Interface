@@ -136,7 +136,7 @@ body {
   transition: all 200ms linear;
 }
 
-a {
+span.dropdown-item {
   position: relative;
   color: #fff;
   transition: all 200ms linear;
@@ -158,18 +158,19 @@ a {
   align-items: center;
   justify-content: space-between;
   -ms-flex-pack: distribute;
+  cursor: pointer;
 }
 .dark-light:checked ~ .sec-center .section-dropdown a {
   color: #102770;
 }
-a:hover {
+span.dropdown-item:hover {
   color: #102770;
   background-color: #ffeba7;
 }
-.dark-light:checked ~ .sec-center .section-dropdown a:hover {
+.dark-light:checked ~ .sec-center .section-dropdown span.dropdown-item:hover {
   color: #ffeba7;
   background-color: #102770;
 }
-a .uil {
+span.dropdown-item .uil {
   font-size: 22px;
 }

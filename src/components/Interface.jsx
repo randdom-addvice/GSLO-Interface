@@ -5,6 +5,7 @@ import OpenedOrders from "./OpenedOrders";
 import TradeInput from "./TradeInput";
 import axios from "axios";
 import Navbar from "./Navbar";
+import { TradeProvider } from "../contexts/TradeContext";
 
 const email = process.env.REACT_APP_EMAIL;
 const password = process.env.REACT_APP_PASSWORD;
@@ -55,7 +56,7 @@ const Interface = () => {
       });
       setAccounts(response.data.accounts);
       setSelectedAccount(response.data.accounts[0]);
-      console.log(response);
+      // console.log(response);
     } catch (err) {
       setError("Error starting session");
     }
@@ -139,73 +140,86 @@ const Interface = () => {
   if (!currentMarketPrices) return <div>No data yet</div>;
   return (
     <>
-      <Navbar accounts={accounts} selectedAccount={selectedAccount} />
-      <main>
-        <div className="main">
-          <section className="orders">
-            <OpenedOrders />
-            <PriceFeed currentMarketPrices={currentMarketPrices} />
-          </section>
-          <section className="tradeBlock">
-            <div className="tradeBlock-group">
-              <TradeInput currentMarketPrices={currentMarketPrices} />
-              <div className="tradeBlock-output">
-                <h3>Output</h3>
-                <div className="card">
-                  <ul>
-                    <li>
-                      <div>
-                        <span>Entry</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Direction</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Stop Loss</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Account Equity</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Risk %</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Risk USD</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Commission USD</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <span>Position Size</span>
-                      </div>
-                    </li>
-                  </ul>
+      <TradeProvider
+        selectedAccount={selectedAccount}
+        setSelectedAccount={setSelectedAccount}
+      >
+        <Navbar
+          accounts={accounts}
+          selectedAccount={selectedAccount}
+          setSelectedAccount={setSelectedAccount}
+          currentMarketPrices={currentMarketPrices}
+        />
+        <main>
+          <div className="main">
+            <section className="orders">
+              <OpenedOrders />
+              <PriceFeed currentMarketPrices={currentMarketPrices} />
+            </section>
+            <section className="tradeBlock">
+              <div className="tradeBlock-group">
+                <TradeInput
+                  currentMarketPrices={currentMarketPrices}
+                  selectedAccount={selectedAccount}
+                />
+                <div className="tradeBlock-output">
+                  <h3>Output</h3>
+                  <div className="card">
+                    <ul>
+                      <li>
+                        <div>
+                          <span>Entry</span>
+                        </div>
+                      </li>
+                      <li>
+                        <div>
+                          <span>Direction</span>
+                        </div>
+                      </li>
+                      <li>
+                        <div>
+                          <span>Stop Loss</span>
+                        </div>
+                      </li>
+                      <li>
+                        <div>
+                          <span>Account Equity</span>
+                        </div>
+                      </li>
+                      <li>
+                        <div>
+                          <span>Risk %</span>
+                        </div>
+                      </li>
+                      <li>
+                        <div>
+                          <span>Risk USD</span>
+                        </div>
+                      </li>
+                      <li>
+                        <div>
+                          <span>Commission USD</span>
+                        </div>
+                      </li>
+                      <li>
+                        <div>
+                          <span>Position Size</span>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="tradeBlock-buttons">
-              <div>
-                <button className="sell">Sell</button>
-                <button className="buy">Buy</button>
+              <div className="tradeBlock-buttons">
+                <div>
+                  <button className="sell">Sell</button>
+                  <button className="buy">Buy</button>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
-      </main>
+            </section>
+          </div>
+        </main>
+      </TradeProvider>
     </>
   );
 };

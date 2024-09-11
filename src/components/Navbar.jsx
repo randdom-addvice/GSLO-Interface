@@ -1,6 +1,9 @@
 import React from "react";
 
-const Navbar = ({ accounts, selectedAccount }) => {
+const Navbar = ({ accounts, selectedAccount, setSelectedAccount }) => {
+  function changeSelectedAccount(account) {
+    setSelectedAccount(account);
+  }
   return (
     <nav className="nav">
       <div className="nav-group">
@@ -17,8 +20,14 @@ const Navbar = ({ accounts, selectedAccount }) => {
                 {selectedAccount?.accountName}
               </label>
               <div class="section-dropdown">
-                {accounts?.map((i) => (
-                  <a href="#">{i.accountName}</a>
+                {accounts?.map((i, index) => (
+                  <span
+                    className="dropdown-item"
+                    onClick={() => changeSelectedAccount(i)}
+                    key={index}
+                  >
+                    {i.accountName}
+                  </span>
                 ))}
               </div>
             </div>

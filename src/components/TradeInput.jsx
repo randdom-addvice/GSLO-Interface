@@ -1,6 +1,24 @@
-import React from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { TradeContext } from "../contexts/TradeContext";
 
-const TradeInput = ({ currentMarketPrices }) => {
+const TradeInput = ({ currentMarketPrices, selectedAccount }) => {
+  const { tradeInputValues, handleTradeInputChange, calculateLotSize } =
+    useContext(TradeContext);
+
+  const lotSize = useMemo(
+    () =>
+      calculateLotSize(
+        currentMarketPrices.bid,
+        tradeInputValues.stopLoss,
+        tradeInputValues.riskUsd,
+        10,
+        tradeInputValues.commissionUsd
+      ),
+    [currentMarketPrices, tradeInputValues]
+  );
+
+  console.log(lotSize);
+
   return (
     <div className="tradeBlock-input">
       <h3>Input</h3>
@@ -15,6 +33,8 @@ const TradeInput = ({ currentMarketPrices }) => {
                   value={currentMarketPrices.bid}
                   className="sl-input"
                   placeholder="Entry"
+                  name="entry"
+                  disabled
                 />
               </span>
             </div>
@@ -27,6 +47,9 @@ const TradeInput = ({ currentMarketPrices }) => {
                   type="number"
                   className="sl-input"
                   placeholder="stop loss"
+                  name="stopLoss"
+                  onChange={handleTradeInputChange}
+                  value={tradeInputValues.stopLoss}
                 />
               </span>
             </div>
@@ -39,6 +62,9 @@ const TradeInput = ({ currentMarketPrices }) => {
                   type="number"
                   className="sl-input"
                   placeholder="Account Equity"
+                  name="equity"
+                  onChange={handleTradeInputChange}
+                  value={tradeInputValues.equity}
                 />
               </span>
             </div>
@@ -51,6 +77,9 @@ const TradeInput = ({ currentMarketPrices }) => {
                   type="number"
                   className="sl-input"
                   placeholder="Risk %"
+                  name="riskPercent"
+                  onChange={handleTradeInputChange}
+                  value={tradeInputValues.riskPercent}
                 />
               </span>
             </div>
@@ -63,6 +92,9 @@ const TradeInput = ({ currentMarketPrices }) => {
                   type="number"
                   className="sl-input"
                   placeholder="Risk USD"
+                  name="riskUsd"
+                  onChange={handleTradeInputChange}
+                  value={tradeInputValues.riskUsd}
                 />
               </span>
             </div>
@@ -75,6 +107,9 @@ const TradeInput = ({ currentMarketPrices }) => {
                   type="number"
                   className="sl-input"
                   placeholder="Commission USD"
+                  name="commissionUsd"
+                  onChange={handleTradeInputChange}
+                  value={tradeInputValues.commissionUsd}
                 />
               </span>
             </div>
