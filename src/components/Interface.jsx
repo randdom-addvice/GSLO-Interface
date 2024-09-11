@@ -7,6 +7,7 @@ import TradeOutput from "./TradeOutput";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { TradeProvider } from "../contexts/TradeContext";
+import TradeButtons from "./TradeButtons";
 
 const email = process.env.REACT_APP_EMAIL;
 const password = process.env.REACT_APP_PASSWORD;
@@ -163,13 +164,13 @@ const Interface = () => {
                   currentMarketPrices={currentMarketPrices}
                   selectedAccount={selectedAccount}
                 />
-                <TradeOutput />
+                <TradeOutput
+                  currentMarketPrices={currentMarketPrices}
+                  selectedAccount={selectedAccount}
+                />
               </div>
               <div className="tradeBlock-buttons">
-                <div>
-                  <button className="sell">Sell</button>
-                  <button className="buy">Buy</button>
-                </div>
+                <TradeButtons currentMarketPrices={currentMarketPrices} />
               </div>
             </section>
           </div>

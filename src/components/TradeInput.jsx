@@ -1,9 +1,13 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { TradeContext } from "../contexts/TradeContext";
 
-const TradeInput = ({ currentMarketPrices, selectedAccount }) => {
-  const { tradeInputValues, handleTradeInputChange, calculateLotSize } =
-    useContext(TradeContext);
+const TradeInput = ({ currentMarketPrices }) => {
+  const {
+    tradeInputValues,
+    handleTradeInputChange,
+    // tradeValues,
+    calculateLotSize,
+  } = useContext(TradeContext);
 
   const tradeValues = useMemo(
     () =>

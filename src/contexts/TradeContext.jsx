@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useMemo } from "react";
 
 export const TradeContext = createContext();
 
@@ -67,6 +67,16 @@ export const TradeProvider = ({
     });
   }
 
+  function determineTradeType(entryPrice, stopLossPrice) {
+    if (entryPrice > stopLossPrice) {
+      return "BUY";
+    } else if (entryPrice < stopLossPrice) {
+      return "SELL";
+    } else {
+      return "INVALID"; // This case occurs if the entry price equals the stop loss price
+    }
+  }
+
   function calculateLotSize(
     entryPrice,
     stopLossPrice,
@@ -80,16 +90,38 @@ export const TradeProvider = ({
     const adjustedRiskAmount = riskAmount - totalCommission;
     const adjustedLotSize = adjustedRiskAmount / (pipValue * stopLossPips);
     // lotSize = adjustedRiskAmount / (pipValue * stopLossPips);
+    const isBuyTrade = "";
     return {
       lotSize: parseFloat(adjustedLotSize.toFixed(2)),
       unadjustedLotSize: parseFloat(lotSize.toFixed(2)),
       totalCommission: totalCommission,
+      stopLossPips,
+      direction: determineTradeType(entryPrice, stopLossPrice),
     };
   }
 
+  //   const tradeValues = useMemo(
+  //     () =>
+  //       calculateLotSize(
+  //         currentMarketPrices?.bid,
+  //         tradeInputValues.stopLoss,
+  //         tradeInputValues.riskUsd,
+  //         10,
+  //         tradeInputValues.commissionUsd
+  //       ),
+  //     [currentMarketPrices, tradeInputValues]
+  //   );
+
+  //   console.log(tradeValues);
+
   return (
     <TradeContext.Provider
-      value={{ tradeInputValues, handleTradeInputChange, calculateLotSize }}
+      value={{
+        tradeInputValues,
+        handleTradeInputChange,
+        calculateLotSize,
+        // tradeValues,
+      }}
     >
       {children}
     </TradeContext.Provider>

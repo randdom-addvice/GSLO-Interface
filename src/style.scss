@@ -159,6 +159,10 @@ main {
       color: #fff;
       cursor: pointer;
       transition: all 0.1s linear;
+      &:disabled {
+        cursor: not-allowed;
+        filter: brightness(0.5);
+      }
       &.buy {
         background-color: green;
         &:hover {
