@@ -5,7 +5,7 @@ const TradeInput = ({ currentMarketPrices, selectedAccount }) => {
   const { tradeInputValues, handleTradeInputChange, calculateLotSize } =
     useContext(TradeContext);
 
-  const lotSize = useMemo(
+  const tradeValues = useMemo(
     () =>
       calculateLotSize(
         currentMarketPrices.bid,
@@ -16,8 +16,6 @@ const TradeInput = ({ currentMarketPrices, selectedAccount }) => {
       ),
     [currentMarketPrices, tradeInputValues]
   );
-
-  console.log(lotSize);
 
   return (
     <div className="tradeBlock-input">
@@ -117,7 +115,16 @@ const TradeInput = ({ currentMarketPrices, selectedAccount }) => {
           <li>
             <div>
               <span>Position Size</span>
-              <span></span>
+              <span>
+                <input
+                  type="number"
+                  value={tradeValues?.lotSize}
+                  className="sl-input"
+                  placeholder="Position Size"
+                  name="position_size"
+                  disabled
+                />
+              </span>
             </div>
           </li>
         </ul>

@@ -71,7 +71,7 @@ export const TradeProvider = ({
     entryPrice,
     stopLossPrice,
     riskAmount,
-    pipValue,
+    pipValue = 10,
     commissionPerLot
   ) {
     const stopLossPips = Math.abs(entryPrice - stopLossPrice) * 10000;
@@ -82,7 +82,7 @@ export const TradeProvider = ({
     // lotSize = adjustedRiskAmount / (pipValue * stopLossPips);
     return {
       lotSize: parseFloat(adjustedLotSize.toFixed(2)),
-      unadjustedLotSize: lotSize,
+      unadjustedLotSize: parseFloat(lotSize.toFixed(2)),
       totalCommission: totalCommission,
     };
   }

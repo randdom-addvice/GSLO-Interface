@@ -32,8 +32,8 @@ const PriceFeed = ({ currentMarketPrices }) => {
           <tbody>
             <tr>
               <td>{currentMarketPrices.epic}</td>
-              <td>{currentMarketPrices.ofr}</td>
               <td>{currentMarketPrices.bid}</td>
+              <td>{currentMarketPrices.ofr}</td>
               <td>
                 {calculateSpread(
                   currentMarketPrices.bid,
